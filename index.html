@@ -1,0 +1,2386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
+<title>Beast Evolution</title>
+
+<style>
+*{
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+    margin:0;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#111;
+    font-family:Arial,sans-serif;
+    touch-action:none;
+}
+
+canvas{
+    display:block;
+}
+
+#menu{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    overflow:auto;
+    color:white;
+    text-align:center;
+    padding:18px;
+    background:
+        radial-gradient(circle at 20% 20%,#2f8d4b,#092414 55%,#030b06);
+}
+
+#menu h1{
+    margin:5px;
+    font-size:34px;
+}
+
+#menu p{
+    color:#d8ffe2;
+}
+
+#races{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    max-width:700px;
+    margin:15px auto;
+}
+
+.race{
+    border:2px solid #ffffff30;
+    border-radius:18px;
+    padding:12px;
+    color:white;
+    background:#ffffff16;
+    font-size:16px;
+    font-weight:bold;
+}
+
+.race.selected{
+    border-color:#ffe000;
+    background:#ffe00025;
+}
+
+.race span{
+    display:block;
+    font-size:38px;
+    margin-bottom:5px;
+}
+
+#evolution{
+    max-width:700px;
+    margin:12px auto;
+    padding:14px;
+    border-radius:18px;
+    background:#00000045;
+    line-height:1.8;
+}
+
+#start{
+    width:100%;
+    max-width:700px;
+    padding:15px;
+    border:0;
+    border-radius:16px;
+    background:#20c65a;
+    color:white;
+    font-size:21px;
+    font-weight:bold;
+}
+
+#hud{
+    display:none;
+    position:fixed;
+    top:8px;
+    left:8px;
+    right:8px;
+    z-index:20;
+    gap:6px;
+    flex-wrap:wrap;
+    pointer-events:none;
+}
+
+.box{
+    padding:7px 10px;
+    border-radius:10px;
+    color:white;
+    background:#07100dcc;
+    font-weight:bold;
+}
+
+.hp{
+    width:100px;
+    height:12px;
+    display:inline-block;
+    overflow:hidden;
+    border-radius:20px;
+    background:#333;
+}
+
+#hpBar{
+    display:block;
+    width:100%;
+    height:100%;
+    background:#22df61;
+    transition:width .2s;
+}
+
+#joystick{
+    display:none;
+    position:fixed;
+    z-index:30;
+    left:18px;
+    bottom:18px;
+    width:140px;
+    height:140px;
+    border-radius:50%;
+    border:2px solid #ffffff45;
+    background:#ffffff16;
+}
+
+#stick{
+    position:absolute;
+    left:41px;
+    top:41px;
+    width:58px;
+    height:58px;
+    border-radius:50%;
+    background:#ffffffb8;
+}
+
+.gameBtn{
+    display:none;
+    position:fixed;
+    z-index:30;
+    border:0;
+    color:white;
+    font-weight:bold;
+    border-radius:50%;
+    box-shadow:0 5px 15px #0008;
+}
+
+#jump{
+    width:86px;
+    height:86px;
+    right:18px;
+    bottom:18px;
+    background:#f59e0b;
+}
+
+#attack{
+    width:74px;
+    height:74px;
+    right:120px;
+    bottom:25px;
+    background:#e53935;
+}
+
+#skill{
+    width:70px;
+    height:70px;
+    right:30px;
+    bottom:120px;
+    background:#814cf0;
+}
+
+#message{
+    display:none;
+    position:fixed;
+    z-index:40;
+    top:80px;
+    left:50%;
+    transform:translateX(-50%);
+    padding:10px 16px;
+    border-radius:14px;
+    color:white;
+    background:#000b;
+}
+
+#death{
+    display:none;
+    position:fixed;
+    inset:0;
+    z-index:200;
+    align-items:center;
+    justify-content:center;
+    background:#000c;
+}
+
+.deathBox{
+    text-align:center;
+    color:white;
+    background:#202020;
+    border-radius:22px;
+    padding:30px;
+}
+
+#respawn{
+    padding:13px 25px;
+    border:0;
+    border-radius:12px;
+    color:white;
+    background:#20c65a;
+    font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div id="menu">
+
+<h1>🧬 BEAST EVOLUTION</h1>
+<p>เลือกเผ่าพันธุ์ของคุณ</p>
+
+<div id="races"></div>
+
+<div id="evolution"></div>
+
+<button id="start">▶️ เริ่มเกม</button>
+
+</div>
+
+<div id="hud">
+
+<div class="box" id="animal">🐯 เสือ</div>
+<div class="box">⭐ XP <span id="xp">0</span></div>
+<div class="box">🆙 Lv.<span id="level">1</span></div>
+<div class="box">
+❤️
+<span class="hp">
+<span id="hpBar"></span>
+</span>
+</div>
+<div class="box" id="biome">🌳 ป่า</div>
+<div class="box">🐾 <span id="nearby">0</span></div>
+
+</div>
+
+<div id="joystick">
+<div id="stick"></div>
+</div>
+
+<button id="attack" class="gameBtn">
+⚔️
+<br>โจมตี
+</button>
+
+<button id="skill" class="gameBtn">
+✨
+<br>สกิล
+</button>
+
+<button id="jump" class="gameBtn">
+⬆️
+<br>กระโดด
+</button>
+
+<div id="message"></div>
+
+<div id="death">
+<div class="deathBox">
+<h1>💀 ตายแล้ว</h1>
+<p>เลือดหมด</p>
+<button id="respawn">🔄 เกิดใหม่</button>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+
+/* ======================================================
+   ข้อมูลเผ่าพันธุ์
+====================================================== */
+
+const RACES={
+
+mammal:{
+name:"สัตว์เลี้ยงลูกด้วยนม",
+icon:"🐾",
+animals:[
+["🕷️","แมงมุม"],
+["🐱","แมว"],
+["🐶","หมา"],
+["🐷","หมู"],
+["🐻","หมี"],
+["🦁","สิงโต"],
+["🦇","ค้างคาวมีขา"]
+]},
+
+aquatic:{
+name:"สัตว์น้ำ",
+icon:"🌊",
+animals:[
+["🐟","ปลา"],
+["🗡️","ปลาดาบ"],
+["🐟","ปลาปิรันยา"],
+["🦈","ฉลาม"],
+["🐙","ปลาหมึกยักษ์"]
+]},
+
+reptile:{
+name:"สัตว์เลื้อยคลาน",
+icon:"🦂",
+animals:[
+["🐍","งูเล็ก"],
+["🐛","ตะขาบ"],
+["🦂","แมงป่อง"],
+["🐊","อัลลิเกเตอร์"],
+["🐊","จระเข้"],
+["🦂","แมงป่องยักษ์"]
+]},
+
+arctic:{
+name:"ขั้วโลก",
+icon:"❄️",
+animals:[
+["🐧","เพนกวิน"],
+["🦭","แมวน้ำ"],
+["🐋","พะยูน"],
+["🐻‍❄️","หมีขั้วโลก"],
+["👹","เยติ"]
+]},
+
+wild:{
+name:"สัตว์ป่า",
+icon:"🌲",
+animals:[
+["🐈","แมวป่า"],
+["🐺","หมาป่า"],
+["🐗","หมูป่า"],
+["🦛","ฮิปโป"],
+["🦏","แรตมีเขา"],
+["🐯","เสือ"]
+]}
+
+};
+
+
+/* ======================================================
+   สีสัตว์
+====================================================== */
+
+const COLORS={
+
+"แมงมุม":0x252525,
+"แมว":0xd99055,
+"หมา":0x9a6a42,
+"หมู":0xf29db0,
+"หมี":0x684329,
+"สิงโต":0xd69a2d,
+"ค้างคาวมีขา":0x342743,
+
+"ปลา":0x3b9de8,
+"ปลาดาบ":0x6e9fb7,
+"ปลาปิรันยา":0xc83d43,
+"ฉลาม":0x687f94,
+"ปลาหมึกยักษ์":0x8e49a3,
+
+"งูเล็ก":0x4b9d48,
+"ตะขาบ":0xb14a37,
+"แมงป่อง":0x4b2927,
+"อัลลิเกเตอร์":0x4b8a4c,
+"จระเข้":0x315f39,
+"แมงป่องยักษ์":0x341b19,
+
+"เพนกวิน":0x202020,
+"แมวน้ำ":0x758994,
+"พะยูน":0x91a7a7,
+"หมีขั้วโลก":0xffffff,
+"เยติ":0xdbeaff,
+
+"แมวป่า":0xb87340,
+"หมาป่า":0x777d86,
+"หมูป่า":0x62442d,
+"ฮิปโป":0x806b79,
+"แรตมีเขา":0x645042,
+"เสือ":0xe68b25
+
+};
+
+
+/* ======================================================
+   ตัวแปร
+====================================================== */
+
+let selectedRace="wild";
+let stage=0;
+
+let xp=0;
+let level=1;
+
+let hp=100;
+let maxHP=100;
+
+let scene;
+let camera;
+let renderer;
+let player;
+let world;
+
+let animals=[];
+let foods=[];
+
+let joystickX=0;
+let joystickY=0;
+
+let velocityY=0;
+let grounded=true;
+
+let yaw=0;
+let pitch=.55;
+
+let cameraTargetYaw=0;
+let cameraTargetPitch=.55;
+
+let draggingCamera=false;
+let oldX=0;
+let oldY=0;
+
+let keys={};
+
+let lastTime=performance.now();
+
+
+/* ======================================================
+   เมนู
+====================================================== */
+
+const raceBox=document.getElementById("races");
+
+for(const key in RACES){
+
+    const r=RACES[key];
+
+    const button=document.createElement("button");
+
+    button.className="race";
+
+    button.innerHTML=`
+    <span>${r.icon}</span>
+    ${r.name}
+    `;
+
+    if(key===selectedRace)
+        button.classList.add("selected");
+
+    button.onclick=()=>{
+
+        selectedRace=key;
+        stage=0;
+
+        document
+        .querySelectorAll(".race")
+        .forEach(x=>x.classList.remove("selected"));
+
+        button.classList.add("selected");
+
+        showEvolution();
+
+    };
+
+    raceBox.appendChild(button);
+}
+
+
+function showEvolution(){
+
+    const animalsList=RACES[selectedRace].animals;
+
+    let text="<b>🧬 วิวัฒนาการ</b><br>";
+
+    animalsList.forEach((a,i)=>{
+
+        text+=a[0]+" "+a[1];
+
+        if(i<animalsList.length-1)
+            text+=" ➜ ";
+
+    });
+
+    text+=`
+    <br><br>
+    ✨ ขั้นที่ 2 ขึ้นไปมีสกิล
+    <br>
+    🏆 ขั้นสุดท้ายมี 2 สกิล
+    `;
+
+    document.getElementById("evolution").innerHTML=text;
+}
+
+showEvolution();
+
+
+/* ======================================================
+   โมเดล 3D
+====================================================== */
+
+function mat(color){
+
+    return new THREE.MeshStandardMaterial({
+        color,
+        roughness:.72,
+        metalness:.05
+    });
+
+}
+
+
+function partSphere(
+    group,
+    color,
+    scale,
+    pos
+){
+
+    const mesh=new THREE.Mesh(
+        new THREE.SphereGeometry(
+            1,
+            20,
+            14
+        ),
+        mat(color)
+    );
+
+    mesh.scale.set(
+        scale.x,
+        scale.y,
+        scale.z
+    );
+
+    mesh.position.set(
+        pos.x,
+        pos.y,
+        pos.z
+    );
+
+    group.add(mesh);
+
+    return mesh;
+}
+
+
+function partBox(
+    group,
+    color,
+    scale,
+    pos
+){
+
+    const mesh=new THREE.Mesh(
+        new THREE.BoxGeometry(
+            1,
+            1,
+            1
+        ),
+        mat(color)
+    );
+
+    mesh.scale.set(
+        scale.x,
+        scale.y,
+        scale.z
+    );
+
+    mesh.position.set(
+        pos.x,
+        pos.y,
+        pos.z
+    );
+
+    group.add(mesh);
+
+    return mesh;
+}
+
+
+function createAnimal(name,scale=1){
+
+    const g=new THREE.Group();
+
+    const c=COLORS[name]||0xffffff;
+
+    /* ลำตัว */
+
+    partSphere(
+        g,c,
+        {x:1.45,y:.75,z:1.75},
+        {x:0,y:1,z:0}
+    );
+
+    /* หน้าอก */
+
+    partSphere(
+        g,
+        0xffffff,
+        {x:.65,y:.45,z:.25},
+        {x:0,y:1,z:-1.42}
+    );
+
+
+    /* หัว */
+
+    partSphere(
+        g,c,
+        {x:.75,y:.7,z:.75},
+        {x:0,y:1.55,z:-1.35}
+    );
+
+
+    /* หู */
+
+    partSphere(
+        g,c,
+        {x:.25,y:.45,z:.18},
+        {x:-.48,y:2.12,z:-1.38}
+    );
+
+    partSphere(
+        g,c,
+        {x:.25,y:.45,z:.18},
+        {x:.48,y:2.12,z:-1.38}
+    );
+
+
+    /* ตา */
+
+    partSphere(
+        g,
+        0x050505,
+        {x:.11,y:.13,z:.07},
+        {x:-.28,y:1.68,z:-2.03}
+    );
+
+    partSphere(
+        g,
+        0x050505,
+        {x:.11,y:.13,z:.07},
+        {x:.28,y:1.68,z:-2.03}
+    );
+
+
+    /* ขา */
+
+    const legs=[
+        [-.65,.4],
+        [.65,.4],
+        [-.65,-.65],
+        [.65,-.65]
+    ];
+
+    for(const l of legs){
+
+        partBox(
+            g,
+            c,
+            {x:.3,y:1,z:.35},
+            {x:l[0],y:.35,z:l[1]}
+        );
+
+    }
+
+
+    /* หาง */
+
+    const tail=partSphere(
+        g,
+        c,
+        {x:.22,y:.22,z:1.0},
+        {x:0,y:1,z:1.75}
+    );
+
+    tail.rotation.x=.5;
+
+
+    /* เขาสำหรับแรต */
+
+    if(name==="แรตมีเขา"){
+
+        const horn=partSphere(
+            g,
+            0xe7d3a2,
+            {x:.12,y:.12,z:.65},
+            {x:0,y:1.7,z:-2}
+        );
+
+        horn.rotation.x=-.7;
+
+    }
+
+
+    /* เขาสิงโต */
+
+    if(name==="สิงโต" || name==="เสือ"){
+
+        for(let i=0;i<8;i++){
+
+            const a=i*Math.PI/4;
+
+            const mane=partSphere(
+                g,
+                name==="สิงโต"
+                ?0x8b551f
+                :0x111111,
+                {x:.15,y:.28,z:.15},
+                {
+                    x:Math.sin(a)*.72,
+                    y:1.55+Math.cos(a)*.65,
+                    z:-1.35
+                }
+            );
+
+        }
+
+    }
+
+
+    /* ปีกค้างคาว */
+
+    if(name==="ค้างคาวมีขา"){
+
+        const wing1=partBox(
+            g,
+            0x3a2945,
+            {x:2,y:.08,z:1},
+            {x:-1.7,y:1.6,z:.3}
+        );
+
+        const wing2=partBox(
+            g,
+            0x3a2945,
+            {x:2,y:.08,z:1},
+            {x:1.7,y:1.6,z:.3}
+        );
+
+    }
+
+
+    g.scale.setScalar(scale);
+
+    return g;
+
+}
+
+
+/* ======================================================
+   พื้นไบโอม
+====================================================== */
+
+function ground(
+x,z,size,color
+){
+
+    const m=new THREE.Mesh(
+        new THREE.PlaneGeometry(size,size),
+        new THREE.MeshStandardMaterial({
+            color
+        })
+    );
+
+    m.rotation.x=-Math.PI/2;
+
+    m.position.set(x,0,z);
+
+    world.add(m);
+
+}
+
+
+/* ======================================================
+   สร้างไบโอม
+====================================================== */
+
+function createBiomes(){
+
+    /* ป่า */
+
+    ground(
+        -50,
+        -50,
+        100,
+        0x3d8c42
+    );
+
+    /* มหาสมุทร */
+
+    ground(
+        50,
+        -50,
+        100,
+        0x2189b8
+    );
+
+    /* ขั้วโลก */
+
+    ground(
+        -50,
+        50,
+        100,
+        0xe6f7ff
+    );
+
+    /* หนองน้ำ */
+
+    ground(
+        50,
+        50,
+        100,
+        0x557c4d
+    );
+
+    /* ทะเลทราย */
+
+    ground(
+        50,
+        -150,
+        100,
+        0xd6af61
+    );
+
+    /* ภูเขาไฟ */
+
+    ground(
+        -50,
+        -150,
+        100,
+        0x4a302a
+    );
+
+
+    /* ภูเขาไฟ */
+
+    const volcano=new THREE.Mesh(
+        new THREE.ConeGeometry(
+            25,
+            45,
+            32
+        ),
+        mat(0x3e3432)
+    );
+
+    volcano.position.set(
+        -50,
+        22,
+        -150
+    );
+
+    world.add(volcano);
+
+
+    /* ลาวา */
+
+    const lava=new THREE.Mesh(
+        new THREE.CylinderGeometry(
+            8,
+            8,
+            .35,
+            32
+        ),
+        new THREE.MeshBasicMaterial({
+            color:0xff3c00
+        })
+    );
+
+    lava.position.set(
+        -50,
+        44,
+        -150
+    );
+
+    world.add(lava);
+
+
+    /* พีระมิด */
+
+    const pyramid=new THREE.Mesh(
+        new THREE.ConeGeometry(
+            18,
+            24,
+            4
+        ),
+        mat(0xd2a44c)
+    );
+
+    pyramid.position.set(
+        50,
+        12,
+        -150
+    );
+
+    pyramid.rotation.y=Math.PI/4;
+
+    world.add(pyramid);
+
+
+    /* เกาะ */
+
+    for(let i=0;i<3;i++){
+
+        const island=new THREE.Mesh(
+            new THREE.CylinderGeometry(
+                9,
+                12,
+                2,
+                20
+            ),
+            mat(0x69a84d)
+        );
+
+        island.position.set(
+            25+i*20,
+            1,
+            -50+i*13
+        );
+
+        world.add(island);
+
+    }
+
+
+    /* แม่น้ำ */
+
+    const river=new THREE.Mesh(
+        new THREE.BoxGeometry(
+            14,
+            .1,
+            100
+        ),
+        mat(0x168dbe)
+    );
+
+    river.position.set(
+        0,
+        .04,
+        50
+    );
+
+    world.add(river);
+
+
+    /* บ้านหิมะ */
+
+    const snow=new THREE.Mesh(
+        new THREE.SphereGeometry(
+            6,
+            20,
+            12,
+            0,
+            Math.PI*2,
+            0,
+            Math.PI/2
+        ),
+        mat(0xffffff)
+    );
+
+    snow.position.set(
+        -50,
+        0,
+        50
+    );
+
+    world.add(snow);
+
+
+    /* ภูเขาหิมะ */
+
+    for(let i=0;i<7;i++){
+
+        const mountain=new THREE.Mesh(
+            new THREE.ConeGeometry(
+                6,
+                14,
+                6
+            ),
+            mat(0xf2fbff)
+        );
+
+        mountain.position.set(
+            -95+i*13,
+            7,
+            72
+        );
+
+        world.add(mountain);
+
+    }
+
+}
+
+
+/* ======================================================
+   ต้นไม้
+====================================================== */
+
+function createTree(x,z){
+
+    const g=new THREE.Group();
+
+    const trunk=partBox(
+        g,
+        0x704523,
+        {x:.35,y:2,z:.35},
+        {x:0,y:1,z:0}
+    );
+
+    partSphere(
+        g,
+        0x23763a,
+        {x:1.4,y:1.5,z:1.4},
+        {x:0,y:2.7,z:0}
+    );
+
+    g.position.set(
+        x,0,z
+    );
+
+    world.add(g);
+
+}
+
+
+/* ======================================================
+   อาหาร
+====================================================== */
+
+function createFood(type,x,z){
+
+    let color;
+
+    let emoji;
+
+    let value;
+
+
+    if(type==="grass"){
+
+        color=0x45b84a;
+        emoji="🌿";
+        value=1;
+
+    }
+
+    if(type==="apple"){
+
+        color=0xe53935;
+        emoji="🍎";
+        value=5;
+
+    }
+
+    if(type==="meat"){
+
+        color=0x9b3c3c;
+        emoji="🍖";
+        value=10;
+
+    }
+
+
+    const g=new THREE.Group();
+
+
+    const ball=new THREE.Mesh(
+        new THREE.SphereGeometry(
+            .45,
+            14,
+            10
+        ),
+        mat(color)
+    );
+
+    ball.position.y=.7;
+
+    g.add(ball);
+
+
+    const label=document.createElement("div");
+
+    label.textContent=emoji;
+
+    label.style.position="absolute";
+    label.style.fontSize="26px";
+    label.style.pointerEvents="none";
+
+
+    g.userData={
+        type,
+        value,
+        label
+    };
+
+
+    g.position.set(
+        x,0,z
+    );
+
+
+    world.add(g);
+
+    foods.push(g);
+
+}
+
+
+/* ======================================================
+   กระจายอาหาร
+====================================================== */
+
+function spawnFoods(){
+
+    for(let i=0;i<35;i++){
+
+        createFood(
+            "grass",
+            -95+Math.random()*190,
+            -95+Math.random()*190
+        );
+
+    }
+
+    for(let i=0;i<22;i++){
+
+        createFood(
+            "apple",
+            -95+Math.random()*190,
+            -95+Math.random()*190
+        );
+
+    }
+
+    for(let i=0;i<12;i++){
+
+        createFood(
+            "meat",
+            -95+Math.random()*190,
+            -95+Math.random()*190
+        );
+
+    }
+
+}
+
+
+/* ======================================================
+   สัตว์กระจายทั่วแมพ
+====================================================== */
+
+function spawnAnimals(){
+
+    animals=[];
+
+    for(let i=0;i<45;i++){
+
+        const keys=Object.keys(RACES);
+
+        const race=
+            keys[
+                Math.floor(
+                    Math.random()*keys.length
+                )
+            ];
+
+        const list=RACES[race].animals;
+
+        const animal=
+            list[
+                Math.floor(
+                    Math.random()*list.length
+                )
+            ];
+
+
+        const mesh=createAnimal(
+            animal[1],
+            .7
+        );
+
+
+        let x=
+            -90+
+            Math.random()*180;
+
+        let z=
+            -180+
+            Math.random()*260;
+
+
+        mesh.position.set(
+            x,
+            0,
+            z
+        );
+
+
+        mesh.userData={
+            race,
+            name:animal[1],
+            speed:.01+
+                Math.random()*.02,
+            direction:
+                Math.random()*Math.PI*2
+        };
+
+
+        world.add(mesh);
+
+        animals.push(mesh);
+
+    }
+
+}
+
+
+/* ======================================================
+   สร้างเกม
+====================================================== */
+
+function init(){
+
+    scene=new THREE.Scene();
+
+    scene.background=
+        new THREE.Color(0x82b979);
+
+
+    camera=new THREE.PerspectiveCamera(
+        60,
+        innerWidth/innerHeight,
+        .1,
+        500
+    );
+
+
+    renderer=new THREE.WebGLRenderer({
+        antialias:true
+    });
+
+    renderer.setPixelRatio(
+        Math.min(
+            devicePixelRatio,
+            2
+        )
+    );
+
+    renderer.setSize(
+        innerWidth,
+        innerHeight
+    );
+
+    document.body.appendChild(
+        renderer.domElement
+    );
+
+
+    const hemi=
+        new THREE.HemisphereLight(
+            0xffffff,
+            0x304030,
+            1.7
+        );
+
+    scene.add(hemi);
+
+
+    const sun=
+        new THREE.DirectionalLight(
+            0xffffff,
+            2
+        );
+
+    sun.position.set(
+        50,
+        100,
+        30
+    );
+
+    scene.add(sun);
+
+
+    world=new THREE.Group();
+
+    scene.add(world);
+
+
+    createBiomes();
+
+    spawnFoods();
+
+    spawnAnimals();
+
+    createPlayer();
+
+    animate();
+
+}
+
+
+/* ======================================================
+   ผู้เล่น
+====================================================== */
+
+function createPlayer(){
+
+    if(player)
+        scene.remove(player);
+
+
+    player=new THREE.Group();
+
+    const animal=
+        RACES[selectedRace]
+        .animals[stage][1];
+
+
+    const model=
+        createAnimal(
+            animal,
+            1.15
+        );
+
+
+    player.add(model);
+
+    player.position.set(
+        0,
+        1,
+        0
+    );
+
+
+    scene.add(player);
+
+    updateHUD();
+
+}
+
+
+/* ======================================================
+   ไบโอม
+====================================================== */
+
+function getBiome(){
+
+    const x=player.position.x;
+    const z=player.position.z;
+
+
+    if(z<-100 && x>0)
+        return {
+            name:"🏜️ ทะเลทราย",
+            water:false
+        };
+
+
+    if(z<-100 && x<0)
+        return {
+            name:"🌋 ภูเขาไฟ",
+            water:false
+        };
+
+
+    if(z>0 && x<0)
+        return {
+            name:"❄️ ขั้วโลก",
+            water:false
+        };
+
+
+    if(z>0 && x>0)
+        return {
+            name:"🐊 หนองน้ำ",
+            water:true
+        };
+
+
+    if(x>0 && z<0)
+        return {
+            name:"🌊 มหาสมุทร",
+            water:true
+        };
+
+
+    return {
+        name:"🌳 ป่าดิบ",
+        water:false
+    };
+
+}
+
+
+/* ======================================================
+   ความเร็ว
+====================================================== */
+
+function isAquatic(){
+
+    const name=
+        RACES[selectedRace]
+        .animals[stage][1];
+
+
+    return [
+        "ปลา",
+        "ปลาดาบ",
+        "ปลาปิรันยา",
+        "ฉลาม",
+        "ปลาหมึกยักษ์",
+        "แมวน้ำ",
+        "พะยูน"
+    ].includes(name);
+
+}
+
+
+function getSpeed(){
+
+    const water=
+        getBiome().water;
+
+
+    if(isAquatic() && water)
+        return .16;
+
+
+    if(isAquatic() && !water)
+        return .055;
+
+
+    if(!isAquatic() && water)
+        return .045;
+
+
+    return .11;
+
+}
+
+
+/* ======================================================
+   เดิน + หันหน้า
+====================================================== */
+
+function movement(dt){
+
+    let ix=joystickX;
+    let iy=joystickY;
+
+
+    if(keys["w"])
+        iy+=1;
+
+    if(keys["s"])
+        iy-=1;
+
+    if(keys["a"])
+        ix-=1;
+
+    if(keys["d"])
+        ix+=1;
+
+
+    const length=
+        Math.sqrt(
+            ix*ix+iy*iy
+        );
+
+
+    if(length>1){
+
+        ix/=length;
+        iy/=length;
+
+    }
+
+
+    if(length>.05){
+
+        /* ทิศทางตามกล้อง */
+
+        const fx=
+            Math.sin(yaw);
+
+        const fz=
+            -Math.cos(yaw);
+
+        const rx=
+            Math.cos(yaw);
+
+        const rz=
+            Math.sin(yaw);
+
+
+        const dx=
+            fx*iy+
+            rx*ix;
+
+        const dz=
+            fz*iy+
+            rz*ix;
+
+
+        const speed=
+            getSpeed();
+
+
+        player.position.x+=
+            dx*speed*dt*60;
+
+        player.position.z+=
+            dz*speed*dt*60;
+
+
+        /*
+          หันหน้าแบบนุ่ม
+        */
+
+        const target=
+            Math.atan2(
+                dx,
+                dz
+            );
+
+
+        let difference=
+            target-
+            player.rotation.y;
+
+
+        while(
+            difference>Math.PI
+        )
+            difference-=Math.PI*2;
+
+
+        while(
+            difference<-Math.PI
+        )
+            difference+=Math.PI*2;
+
+
+        player.rotation.y+=
+            difference*
+            Math.min(
+                1,
+                .18*dt*60
+            );
+
+    }
+
+
+    /* กระโดด */
+
+    player.position.y+=
+        velocityY*dt*60;
+
+    velocityY-=
+        .012*dt*60;
+
+
+    if(player.position.y<=1){
+
+        player.position.y=1;
+
+        velocityY=0;
+
+        grounded=true;
+
+    }
+
+
+    /* ขอบโลก */
+
+    player.position.x=
+        THREE.MathUtils.clamp(
+            player.position.x,
+            -98,
+            98
+        );
+
+    player.position.z=
+        THREE.MathUtils.clamp(
+            player.position.z,
+            -198,
+            198
+        );
+
+}
+
+
+/* ======================================================
+   สัตว์เดินไปมา
+====================================================== */
+
+function updateAnimals(dt){
+
+    for(const a of animals){
+
+        const s=a.userData;
+
+
+        s.direction+=
+            (Math.random()-.5)
+            *.01;
+
+
+        a.position.x+=
+            Math.sin(s.direction)
+            *s.speed*dt*60;
+
+        a.position.z+=
+            Math.cos(s.direction)
+            *s.speed*dt*60;
+
+
+        a.rotation.y=
+            THREE.MathUtils.lerp(
+                a.rotation.y,
+                s.direction,
+                .05
+            );
+
+
+        if(
+            Math.abs(a.position.x)>97
+        )
+            s.direction=Math.PI-
+                s.direction;
+
+
+        if(
+            a.position.z<-197 ||
+            a.position.z>197
+        )
+            s.direction=-s.direction;
+
+    }
+
+}
+
+
+/* ======================================================
+   เก็บอาหาร
+====================================================== */
+
+function collectFoods(){
+
+    for(let i=foods.length-1;i>=0;i--){
+
+        const food=foods[i];
+
+        const dx=
+            food.position.x-
+            player.position.x;
+
+        const dz=
+            food.position.z-
+            player.position.z;
+
+
+        if(
+            Math.sqrt(
+                dx*dx+dz*dz
+            )<2
+        ){
+
+            xp+=food.userData.value;
+
+
+            while(
+                xp>=level*20
+            ){
+
+                xp-=level*20;
+
+                level++;
+
+                if(level>=2)
+                    stage=Math.min(
+                        stage+1,
+                        RACES[selectedRace]
+                        .animals.length-1
+                    );
+
+
+                createPlayer();
+
+                showMessage(
+                    "🎉 วิวัฒนาการเป็น "+
+                    getAnimalName()
+                );
+
+            }
+
+
+            world.remove(food);
+
+            foods.splice(
+                i,
+                1
+            );
+
+
+            updateHUD();
+
+        }
+
+    }
+
+}
+
+
+/* ======================================================
+   ลาวา
+====================================================== */
+
+function lavaDamage(){
+
+    const dx=
+        player.position.x+50;
+
+    const dz=
+        player.position.z+150;
+
+
+    if(
+        Math.sqrt(
+            dx*dx+dz*dz
+        )<10
+    ){
+
+        damage(1);
+
+    }
+
+}
+
+
+/* ======================================================
+   ดาเมจ
+====================================================== */
+
+function damage(amount){
+
+    hp-=amount;
+
+    if(hp<=0){
+
+        hp=0;
+
+        updateHUD();
+
+        document.getElementById(
+            "death"
+        ).style.display="flex";
+
+        return;
+
+    }
+
+    updateHUD();
+
+}
+
+
+/* ======================================================
+   อัปเดต HUD
+====================================================== */
+
+function updateHUD(){
+
+    const a=
+        RACES[selectedRace]
+        .animals[stage];
+
+
+    document.getElementById(
+        "animal"
+    ).textContent=
+        a[0]+" "+a[1];
+
+
+    document.getElementById(
+        "xp"
+    ).textContent=xp;
+
+
+    document.getElementById(
+        "level"
+    ).textContent=level;
+
+
+    document.getElementById(
+        "hpBar"
+    ).style.width=
+        (hp/maxHP*100)+"%";
+
+
+    document.getElementById(
+        "biome"
+    ).textContent=
+        getBiome()
+        .name;
+
+
+    document.getElementById(
+        "nearby"
+    ).textContent=
+        animals.length;
+
+}
+
+
+/* ======================================================
+   กระโดด
+====================================================== */
+
+function jump(){
+
+    if(!grounded)
+        return;
+
+    velocityY=.25;
+
+    grounded=false;
+
+}
+
+
+/* ======================================================
+   โจมตี
+====================================================== */
+
+function attack(){
+
+    showMessage(
+        "⚔️ "+
+        getAnimalName()+
+        " โจมตี!"
+    );
+
+}
+
+
+/* ======================================================
+   สกิล
+====================================================== */
+
+function skill(){
+
+    if(stage===0){
+
+        showMessage(
+            "🔒 ต้องวิวัฒนาการก่อน"
+        );
+
+        return;
+
+    }
+
+
+    if(
+        stage===
+        RACES[selectedRace]
+        .animals.length-1
+    ){
+
+        showMessage(
+            "✨ สกิลพิเศษ 2 สกิล!"
+        );
+
+    }else{
+
+        showMessage(
+            "✨ ใช้สกิลประจำตัว!"
+        );
+
+    }
+
+}
+
+
+function getAnimalName(){
+
+    return RACES[selectedRace]
+    .animals[stage][1];
+
+}
+
+
+/* ======================================================
+   ข้อความ
+====================================================== */
+
+let messageTimer;
+
+function showMessage(text){
+
+    const box=
+        document.getElementById(
+            "message"
+        );
+
+    box.textContent=text;
+
+    box.style.display="block";
+
+    clearTimeout(messageTimer);
+
+    messageTimer=
+        setTimeout(
+            ()=>{
+                box.style.display="none";
+            },
+            1500
+        );
+
+}
+
+
+/* ======================================================
+   จอยมือถือ
+====================================================== */
+
+const joystick=
+    document.getElementById(
+        "joystick"
+    );
+
+const stick=
+    document.getElementById(
+        "stick"
+    );
+
+
+let joyActive=false;
+
+
+joystick.addEventListener(
+    "pointerdown",
+    e=>{
+
+        joyActive=true;
+
+        joystick.setPointerCapture(
+            e.pointerId
+        );
+
+        updateJoy(e);
+
+    }
+);
+
+
+joystick.addEventListener(
+    "pointermove",
+    e=>{
+
+        if(joyActive)
+            updateJoy(e);
+
+    }
+);
+
+
+joystick.addEventListener(
+    "pointerup",
+    resetJoy
+);
+
+
+joystick.addEventListener(
+    "pointercancel",
+    resetJoy
+);
+
+
+function updateJoy(e){
+
+    const r=
+        joystick.getBoundingClientRect();
+
+
+    let x=
+        e.clientX-
+        r.left-
+        r.width/2;
+
+
+    let y=
+        e.clientY-
+        r.top-
+        r.height/2;
+
+
+    const max=45;
+
+    const d=
+        Math.sqrt(
+            x*x+y*y
+        );
+
+
+    if(d>max){
+
+        x=x/d*max;
+
+        y=y/d*max;
+
+    }
+
+
+    joystickX=x/max;
+
+    joystickY=-y/max;
+
+
+    stick.style.transform=
+        `translate(${x}px,${y}px)`;
+
+}
+
+
+function resetJoy(){
+
+    joyActive=false;
+
+    joystickX=0;
+
+    joystickY=0;
+
+    stick.style.transform=
+        "translate(0,0)";
+
+}
+
+
+/* ======================================================
+   กล้องสมูด
+====================================================== */
+
+window.addEventListener(
+    "pointerdown",
+    e=>{
+
+        if(
+            e.clientX>
+            innerWidth*.38
+        ){
+
+            draggingCamera=true;
+
+            oldX=e.clientX;
+
+            oldY=e.clientY;
+
+        }
+
+    }
+);
+
+
+window.addEventListener(
+    "pointermove",
+    e=>{
+
+        if(!draggingCamera)
+            return;
+
+
+        const dx=
+            e.clientX-oldX;
+
+        const dy=
+            e.clientY-oldY;
+
+
+        cameraTargetYaw-=
+            dx*.006;
+
+
+        cameraTargetPitch+=
+            dy*.004;
+
+
+        cameraTargetPitch=
+            THREE.MathUtils.clamp(
+                cameraTargetPitch,
+                .15,
+                1.05
+            );
+
+
+        oldX=e.clientX;
+        oldY=e.clientY;
+
+    }
+);
+
+
+window.addEventListener(
+    "pointerup",
+    ()=>{
+        draggingCamera=false;
+    }
+);
+
+
+/* ======================================================
+   กล้อง
+====================================================== */
+
+function updateCamera(){
+
+    /*
+      ทำให้กล้องหมุนตามเป้าหมาย
+      แบบ smooth
+    */
+
+    yaw=THREE.MathUtils.lerp(
+        yaw,
+        cameraTargetYaw,
+        .12
+    );
+
+
+    pitch=THREE.MathUtils.lerp(
+        pitch,
+        cameraTargetPitch,
+        .12
+    );
+
+
+    const distance=10;
+
+
+    const targetX=
+        player.position.x+
+        Math.sin(yaw)*
+        distance*
+        Math.cos(pitch);
+
+
+    const targetY=
+        player.position.y+
+        3+
+        Math.sin(pitch)*
+        distance;
+
+
+    const targetZ=
+        player.position.z+
+        Math.cos(yaw)*
+        distance*
+        Math.cos(pitch);
+
+
+    camera.position.x=
+        THREE.MathUtils.lerp(
+            camera.position.x,
+            targetX,
+            .1
+        );
+
+
+    camera.position.y=
+        THREE.MathUtils.lerp(
+            camera.position.y,
+            targetY,
+            .1
+        );
+
+
+    camera.position.z=
+        THREE.MathUtils.lerp(
+            camera.position.z,
+            targetZ,
+            .1
+        );
+
+
+    camera.lookAt(
+        player.position.x,
+        player.position.y+1,
+        player.position.z
+    );
+
+}
+
+
+/* ======================================================
+   ปุ่ม
+====================================================== */
+
+document.getElementById(
+    "jump"
+).onclick=jump;
+
+document.getElementById(
+    "attack"
+).onclick=attack;
+
+document.getElementById(
+    "skill"
+).onclick=skill;
+
+
+document.getElementById(
+    "respawn"
+).onclick=()=>{
+
+    hp=maxHP;
+
+    player.position.set(
+        0,
+        1,
+        0
+    );
+
+    velocityY=0;
+
+    document.getElementById(
+        "death"
+    ).style.display="none";
+
+    updateHUD();
+
+};
+
+
+/* ======================================================
+   คีย์บอร์ด
+====================================================== */
+
+window.addEventListener(
+    "keydown",
+    e=>{
+        keys[e.key.toLowerCase()]=true;
+
+        if(e.key===" ")
+            jump();
+    }
+);
+
+
+window.addEventListener(
+    "keyup",
+    e=>{
+        keys[e.key.toLowerCase()]=false;
+    }
+);
+
+
+/* ======================================================
+   เริ่มเกม
+====================================================== */
+
+document.getElementById(
+    "start"
+).onclick=()=>{
+
+    document.getElementById(
+        "menu"
+    ).style.display="none";
+
+
+    document.getElementById(
+        "hud"
+    ).style.display="flex";
+
+
+    document.getElementById(
+        "joystick"
+    ).style.display="block";
+
+
+    document.querySelectorAll(
+        ".gameBtn"
+    ).forEach(
+        b=>b.style.display="block"
+    );
+
+
+    init();
+
+};
+
+
+/* ======================================================
+   Game Loop
+====================================================== */
+
+function animate(){
+
+    requestAnimationFrame(
+        animate
+    );
+
+
+    const now=performance.now();
+
+    const dt=
+        Math.min(
+            .05,
+            (now-lastTime)/1000
+        );
+
+    lastTime=now;
+
+
+    movement(dt);
+
+    updateAnimals(dt);
+
+    collectFoods();
+
+    lavaDamage();
+
+    updateCamera();
+
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+
+/* ======================================================
+   ปรับขนาดหน้าจอ
+====================================================== */
+
+window.addEventListener(
+    "resize",
+    ()=>{
+
+        if(!camera)
+            return;
+
+        camera.aspect=
+            innerWidth/
+            innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            innerWidth,
+            innerHeight
+        );
+
+    }
+);
+
+</script>
+
+</body>
+</html>
